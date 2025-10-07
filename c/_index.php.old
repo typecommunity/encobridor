@@ -1,0 +1,266 @@
+<?php
+/**
+ * Cloaker Pro - Public Campaign Handler
+ * Este arquivo processa os slugs das campanhas
+ * Localização: /cloaker-pro/c/index.php
+ */
+
+// Habilitar exibição de erros para debug (desabilite em produção)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+
+// Definir caminho base (sobe um nível para pegar a raiz do projeto)
+define('BASE_PATH_CUSTOM', dirname(__DIR__));
+
+// Carregar configuração
+require_once BASE_PATH_CUSTOM . '/config.php';
+require_once BASE_PATH_CUSTOM . '/core/Database.php';
+require_once BASE_PATH_CUSTOM . '/core/Campaign.php';
+require_once BASE_PATH_CUSTOM . '/core/Detector.php';
+require_once BASE_PATH_CUSTOM . '/core/Analytics.php';
+
+// Obter o slug da URL
+// Suporta: /c/slug ou /c/index.php/slug ou ?slug=xxx
+$slug = '';
+
+// Método 1: Via query string
+if (isset($_GET['slug'])) {
+    $slug = $_GET['slug'];
+}
+
+// Método 2: Via PATH_INFO
+if (empty($slug) && isset($_SERVER['PATH_INFO'])) {
+    $slug = trim($_SERVER['PATH_INFO'], '/');
+}
+
+// Método 3: Via REQUEST_URI (parsing manual)
+if (empty($slug) && isset($_SERVER['REQUEST_URI'])) {
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $parts = array_filter(explode('/', trim($uri, '/')));
+    
+    // Se o formato for /cloaker-pro/c/slug
+    // Remover 'cloaker-pro' e 'c' para pegar só o slug
+    $parts = array_values($parts); // Reindexar
+    
+    // Encontrar 'c' e pegar o próximo elemento
+    $cIndex = array_search('c', $parts);
+    if ($cIndex !== false && isset($parts[$cIndex + 1])) {
+        $slug = $parts[$cIndex + 1];
+    }
+}
+
+// Debug: Descomentar para ver o que foi detectado
+// echo "DEBUG: Slug detectado = '$slug'<br>";
+// echo "DEBUG: REQUEST_URI = " . ($_SERVER['REQUEST_URI'] ?? 'N/A') . "<br>";
+// echo "DEBUG: PATH_INFO = " . ($_SERVER['PATH_INFO'] ?? 'N/A') . "<br>";
+// die();
+
+// Validar slug (apenas caracteres seguros)
+if (empty($slug) || !preg_match('/^[a-z0-9\-]{3,64}$/i', $slug)) {
+    http_response_code(404);
+    header('Content-Type: text/html; charset=UTF-8');
+    die('<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Campanha não encontrada</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+               display: flex; align-items: center; justify-content: center; min-height: 100vh; 
+               margin: 0; background: #f5f5f5; }
+        .container { text-align: center; padding: 2rem; }
+        h1 { color: #e53e3e; margin-bottom: 0.5rem; }
+        p { color: #718096; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>404</h1>
+        <p>Campanha não encontrada</p>
+    </div>
+</body>
+</html>');
+}
+
+try {
+    // Instanciar classes necessárias
+    $campaign = new Campaign();
+    $detector = new Detector();
+    $analytics = new Analytics();
+    
+    // Buscar campanha pelo SLUG
+    $campaignData = $campaign->getBySlug($slug);
+    
+    if (!$campaignData) {
+        http_response_code(404);
+        header('Content-Type: text/html; charset=UTF-8');
+        die('<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Campanha não encontrada</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+               display: flex; align-items: center; justify-content: center; min-height: 100vh; 
+               margin: 0; background: #f5f5f5; }
+        .container { text-align: center; padding: 2rem; }
+        h1 { color: #e53e3e; margin-bottom: 0.5rem; }
+        p { color: #718096; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>404</h1>
+        <p>Esta campanha não existe ou foi removida</p>
+        <small style="color: #cbd5e0;">Slug: ' . htmlspecialchars($slug) . '</small>
+    </div>
+</body>
+</html>');
+    }
+    
+    // Verificar se campanha está ativa
+    if ($campaignData['status'] !== 'active') {
+        http_response_code(503);
+        header('Content-Type: text/html; charset=UTF-8');
+        die('<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>503 - Campanha pausada</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+               display: flex; align-items: center; justify-content: center; min-height: 100vh; 
+               margin: 0; background: #f5f5f5; }
+        .container { text-align: center; padding: 2rem; }
+        h1 { color: #ed8936; margin-bottom: 0.5rem; }
+        p { color: #718096; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Temporariamente indisponível</h1>
+        <p>Esta campanha está pausada no momento</p>
+    </div>
+</body>
+</html>');
+    }
+    
+    // Analisar visitante
+    $analysis = $detector->analyze();
+    
+    // Determinar qual página mostrar
+    $settings = json_decode($campaignData['settings'] ?? '{}', true) ?: [];
+    $rules = json_decode($campaignData['rules'] ?? '{}', true) ?: [];
+    $shouldShowMoney = true;
+    
+    // Aplicar regras de filtragem
+    if (isset($settings['detect_bots']) && $settings['detect_bots']) {
+        if ($analysis['is_bot']) {
+            $shouldShowMoney = false;
+        }
+    }
+    
+    if (isset($settings['detect_vpn']) && $settings['detect_vpn']) {
+        if ($analysis['is_vpn']) {
+            $shouldShowMoney = false;
+        }
+    }
+    
+    // Verificar país permitido
+    if (!empty($rules['allowed_countries'])) {
+        $allowedCountries = array_map('trim', explode(',', $rules['allowed_countries']));
+        if (!in_array($analysis['country_code'], $allowedCountries)) {
+            $shouldShowMoney = false;
+        }
+    }
+    
+    // Definir página de destino
+    $targetUrl = $shouldShowMoney ? $campaignData['money_page'] : $campaignData['safe_page'];
+    
+    // Registrar visita no analytics (se habilitado)
+    if (isset($settings['track_analytics']) && $settings['track_analytics']) {
+        $analytics->logVisit([
+            'campaign_id' => $campaignData['id'],
+            'ip' => $analysis['ip'],
+            'user_agent' => $analysis['user_agent'],
+            'country' => $analysis['country_code'],
+            'is_bot' => $analysis['is_bot'] ? 1 : 0,
+            'is_vpn' => $analysis['is_vpn'] ? 1 : 0,
+            'action' => $shouldShowMoney ? 'money' : 'safe',
+            'url' => $targetUrl
+        ]);
+    }
+    
+    // Incrementar contador de visitantes
+    $campaign->incrementVisitors($campaignData['id']);
+    
+    // Redirecionar para página apropriada
+    header('Location: ' . $targetUrl, true, 302);
+    exit;
+    
+} catch (Exception $e) {
+    // Log do erro
+    error_log("Cloaker Error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
+    // Em caso de erro, mostrar página de erro genérica
+    http_response_code(500);
+    header('Content-Type: text/html; charset=UTF-8');
+    
+    // Se debug mode ativo, mostrar erro
+    if (defined('DEBUG_MODE') && DEBUG_MODE) {
+        die('<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>500 - Erro Interno</title>
+    <style>
+        body { font-family: monospace; padding: 2rem; background: #1a1a1a; color: #fff; }
+        .error { background: #fee; color: #c00; padding: 1rem; border-radius: 4px; margin: 1rem 0; }
+        pre { background: #2a2a2a; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Erro 500 - Erro Interno do Servidor</h1>
+    <div class="error">
+        <strong>Erro:</strong> ' . htmlspecialchars($e->getMessage()) . '
+    </div>
+    <h2>Stack Trace:</h2>
+    <pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>
+    <h2>Dados de Debug:</h2>
+    <pre>Slug: ' . htmlspecialchars($slug) . '
+REQUEST_URI: ' . htmlspecialchars($_SERVER['REQUEST_URI'] ?? 'N/A') . '
+PATH_INFO: ' . htmlspecialchars($_SERVER['PATH_INFO'] ?? 'N/A') . '</pre>
+</body>
+</html>');
+    }
+    
+    // Em produção, mostrar erro genérico
+    die('<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Erro Interno</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+               display: flex; align-items: center; justify-content: center; min-height: 100vh; 
+               margin: 0; background: #f5f5f5; }
+        .container { text-align: center; padding: 2rem; }
+        h1 { color: #e53e3e; margin-bottom: 0.5rem; }
+        p { color: #718096; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>500</h1>
+        <p>Erro interno do servidor</p>
+        <small style="color: #cbd5e0;">Por favor, tente novamente mais tarde</small>
+    </div>
+</body>
+</html>');
+}

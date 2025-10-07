@@ -1,0 +1,2 @@
+[04-Oct-2025 01:11:55 UTC] PHP Fatal error:  Cannot redeclare redirect() (previously declared in /home/ataweb.com.br/public_html/cloaker-pro/cloak.php:68) in /home/ataweb.com.br/public_html/cloaker-pro/config.php on line 336
+[04-Oct-2025 01:12:21 UTC] PHP Fatal error:  Cannot redeclare redirect() (previously declared in /home/ataweb.com.br/public_html/cloaker-pro/cloak.php:68) in /home/ataweb.com.br/public_html/cloaker-pro/config.php on line 336

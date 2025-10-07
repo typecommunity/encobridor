@@ -1,0 +1,400 @@
+<?php
+/**
+ * Cloaker Pro - Diagnóstico Automático
+ * Execute este arquivo em: /cloaker-pro/c/diagnostic.php
+ * Acesse: https://ataweb.com.br/cloaker-pro/c/diagnostic.php
+ */
+
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+echo "<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Cloaker Pro - Diagnóstico Automático</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #0a0a0a; 
+            color: #e0e0e0; 
+            padding: 2rem; 
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #c0c0c0; margin-bottom: 2rem; border-bottom: 2px solid #2a2a2a; padding-bottom: 1rem; }
+        h2 { color: #a0a0a0; margin: 2rem 0 1rem; font-size: 1.3rem; }
+        .test-section { 
+            background: #1a1a1a; 
+            border: 1px solid #2a2a2a; 
+            border-radius: 8px; 
+            padding: 1.5rem; 
+            margin-bottom: 1.5rem; 
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .warning { color: #fbbf24; }
+        .info { color: #60a5fa; }
+        .code { 
+            background: #2a2a2a; 
+            border: 1px solid #3a3a3a; 
+            border-radius: 4px; 
+            padding: 1rem; 
+            margin: 0.5rem 0; 
+            overflow-x: auto; 
+            font-family: 'Courier New', monospace; 
+            font-size: 0.9rem;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 1rem 0; 
+        }
+        th, td { 
+            padding: 0.75rem; 
+            text-align: left; 
+            border-bottom: 1px solid #2a2a2a; 
+        }
+        th { 
+            background: #2a2a2a; 
+            color: #c0c0c0; 
+            font-weight: 600; 
+        }
+        tr:hover { background: #1f1f1f; }
+        .status-icon { 
+            display: inline-block; 
+            width: 20px; 
+            text-align: center; 
+            font-weight: bold; 
+        }
+        .btn { 
+            display: inline-block; 
+            padding: 0.5rem 1rem; 
+            background: #c0c0c0; 
+            color: #0a0a0a; 
+            text-decoration: none; 
+            border-radius: 4px; 
+            margin: 0.25rem; 
+            font-weight: 500;
+        }
+        .btn:hover { background: #e0e0e0; }
+        .alert { 
+            padding: 1rem; 
+            border-radius: 4px; 
+            margin: 1rem 0; 
+            border-left: 4px solid;
+        }
+        .alert-success { background: #064e3b; border-color: #4ade80; }
+        .alert-error { background: #7f1d1d; border-color: #f87171; }
+        .alert-warning { background: #78350f; border-color: #fbbf24; }
+        .alert-info { background: #1e3a8a; border-color: #60a5fa; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <h1>🔍 Cloaker Pro - Diagnóstico Automático</h1>";
+
+// ==============================================
+// TESTE 1: VERIFICAR ESTRUTURA DE DIRETÓRIOS
+// ==============================================
+echo "<div class='test-section'>
+        <h2>1️⃣ Estrutura de Diretórios</h2>";
+
+$basePath = dirname(__DIR__);
+$requiredDirs = [
+    'core' => $basePath . '/core',
+    'admin' => $basePath . '/admin',
+    'storage' => $basePath . '/storage',
+    'storage/logs' => $basePath . '/storage/logs',
+    'c' => __DIR__
+];
+
+echo "<table>
+        <tr><th>Diretório</th><th>Status</th><th>Caminho</th></tr>";
+
+foreach ($requiredDirs as $name => $path) {
+    $exists = is_dir($path);
+    $icon = $exists ? "<span class='status-icon success'>✓</span>" : "<span class='status-icon error'>✗</span>";
+    $status = $exists ? "<span class='success'>Existe</span>" : "<span class='error'>Não encontrado</span>";
+    echo "<tr><td>$name</td><td>$icon $status</td><td><code>" . htmlspecialchars($path) . "</code></td></tr>";
+}
+
+echo "</table></div>";
+
+// ==============================================
+// TESTE 2: VERIFICAR ARQUIVOS NECESSÁRIOS
+// ==============================================
+echo "<div class='test-section'>
+        <h2>2️⃣ Arquivos Necessários</h2>";
+
+$requiredFiles = [
+    'config.php' => $basePath . '/config.php',
+    'Database.php' => $basePath . '/core/Database.php',
+    'Campaign.php' => $basePath . '/core/Campaign.php',
+    'Detector.php' => $basePath . '/core/Detector.php',
+    'Analytics.php' => $basePath . '/core/Analytics.php',
+    'c/index.php' => __DIR__ . '/index.php',
+    'c/.htaccess' => __DIR__ . '/.htaccess'
+];
+
+echo "<table>
+        <tr><th>Arquivo</th><th>Status</th><th>Caminho</th></tr>";
+
+foreach ($requiredFiles as $name => $path) {
+    $exists = file_exists($path);
+    $icon = $exists ? "<span class='status-icon success'>✓</span>" : "<span class='status-icon error'>✗</span>";
+    $status = $exists ? "<span class='success'>Existe</span>" : "<span class='error'>Não encontrado</span>";
+    echo "<tr><td>$name</td><td>$icon $status</td><td><code>" . htmlspecialchars($path) . "</code></td></tr>";
+}
+
+echo "</table></div>";
+
+// ==============================================
+// TESTE 3: VERIFICAR CONFIG.PHP E CONEXÃO
+// ==============================================
+echo "<div class='test-section'>
+        <h2>3️⃣ Configuração e Banco de Dados</h2>";
+
+if (file_exists($basePath . '/config.php')) {
+    require_once $basePath . '/config.php';
+    
+    echo "<p><span class='success'>✓</span> config.php carregado com sucesso</p>";
+    
+    echo "<div class='code'>";
+    echo "<strong>BASE_URL:</strong> " . (defined('BASE_URL') ? BASE_URL : 'Não definido') . "<br>";
+    echo "<strong>DB_HOST:</strong> " . (defined('DB_HOST') ? DB_HOST : 'Não definido') . "<br>";
+    echo "<strong>DB_NAME:</strong> " . (defined('DB_NAME') ? DB_NAME : 'Não definido') . "<br>";
+    echo "<strong>DB_USER:</strong> " . (defined('DB_USER') ? DB_USER : 'Não definido') . "<br>";
+    echo "</div>";
+    
+    // Testar conexão com banco
+    if (isset($pdo) && $pdo instanceof PDO) {
+        echo "<p><span class='success'>✓</span> Conexão PDO estabelecida</p>";
+        
+        // Testar query
+        try {
+            $stmt = $pdo->query("SELECT COUNT(*) as total FROM campaigns");
+            $result = $stmt->fetch();
+            echo "<p><span class='success'>✓</span> Total de campanhas no banco: <strong>" . $result['total'] . "</strong></p>";
+        } catch (Exception $e) {
+            echo "<p><span class='error'>✗</span> Erro ao consultar banco: " . $e->getMessage() . "</p>";
+        }
+    } else {
+        echo "<p><span class='error'>✗</span> Conexão PDO não estabelecida</p>";
+    }
+} else {
+    echo "<p><span class='error'>✗</span> config.php não encontrado</p>";
+}
+
+echo "</div>";
+
+// ==============================================
+// TESTE 4: VERIFICAR MOD_REWRITE
+// ==============================================
+echo "<div class='test-section'>
+        <h2>4️⃣ Apache mod_rewrite</h2>";
+
+if (function_exists('apache_get_modules')) {
+    $modules = apache_get_modules();
+    if (in_array('mod_rewrite', $modules)) {
+        echo "<p><span class='success'>✓</span> mod_rewrite está <strong class='success'>ATIVO</strong></p>";
+    } else {
+        echo "<p><span class='error'>✗</span> mod_rewrite está <strong class='error'>INATIVO</strong></p>";
+        echo "<div class='alert alert-error'>
+                <strong>Ação necessária:</strong> Entre em contato com o suporte da hospedagem para ativar mod_rewrite.
+              </div>";
+    }
+} else {
+    echo "<p><span class='warning'>⚠</span> Não foi possível verificar (função apache_get_modules não disponível)</p>";
+    echo "<p class='info'>Isso é normal em alguns ambientes. Tente acessar uma URL com slug para verificar.</p>";
+}
+
+echo "</div>";
+
+// ==============================================
+// TESTE 5: LISTAR CAMPANHAS
+// ==============================================
+echo "<div class='test-section'>
+        <h2>5️⃣ Campanhas Cadastradas</h2>";
+
+if (file_exists($basePath . '/core/Campaign.php')) {
+    require_once $basePath . '/core/Campaign.php';
+    
+    try {
+        $campaign = new Campaign();
+        $campaigns = $campaign->getAll();
+        
+        if (empty($campaigns['data'])) {
+            echo "<div class='alert alert-warning'>
+                    <strong>Nenhuma campanha cadastrada.</strong> Crie uma campanha no painel admin primeiro.
+                  </div>";
+        } else {
+            echo "<table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Slug</th>
+                        <th>Status</th>
+                        <th>URL Pública</th>
+                        <th>Ações</th>
+                    </tr>";
+            
+            foreach ($campaigns['data'] as $camp) {
+                $publicUrl = BASE_URL . '/c/' . $camp['slug'];
+                $statusClass = $camp['status'] === 'active' ? 'success' : 'warning';
+                
+                echo "<tr>
+                        <td>" . htmlspecialchars($camp['id']) . "</td>
+                        <td>" . htmlspecialchars($camp['name']) . "</td>
+                        <td><code>" . htmlspecialchars($camp['slug']) . "</code></td>
+                        <td><span class='$statusClass'>" . htmlspecialchars($camp['status']) . "</span></td>
+                        <td><code>" . htmlspecialchars($publicUrl) . "</code></td>
+                        <td><a href='$publicUrl' target='_blank' class='btn'>Testar</a></td>
+                      </tr>";
+            }
+            
+            echo "</table>";
+        }
+    } catch (Exception $e) {
+        echo "<div class='alert alert-error'>
+                <strong>Erro:</strong> " . $e->getMessage() . "
+              </div>";
+    }
+}
+
+echo "</div>";
+
+// ==============================================
+// TESTE 6: VERIFICAR URL ATUAL
+// ==============================================
+echo "<div class='test-section'>
+        <h2>6️⃣ Análise da URL Atual</h2>";
+
+echo "<div class='code'>";
+echo "<strong>REQUEST_URI:</strong> " . ($_SERVER['REQUEST_URI'] ?? 'N/A') . "<br>";
+echo "<strong>PATH_INFO:</strong> " . ($_SERVER['PATH_INFO'] ?? 'N/A') . "<br>";
+echo "<strong>SCRIPT_NAME:</strong> " . ($_SERVER['SCRIPT_NAME'] ?? 'N/A') . "<br>";
+echo "<strong>QUERY_STRING:</strong> " . ($_SERVER['QUERY_STRING'] ?? 'N/A') . "<br>";
+echo "</div>";
+
+// Simular detecção de slug
+if (isset($_SERVER['REQUEST_URI'])) {
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $parts = array_filter(explode('/', trim($uri, '/')));
+    $parts = array_values($parts);
+    
+    echo "<p><strong>Partes da URL:</strong></p>";
+    echo "<div class='code'>" . print_r($parts, true) . "</div>";
+    
+    $cIndex = array_search('c', $parts);
+    if ($cIndex !== false && isset($parts[$cIndex + 1])) {
+        $slug = $parts[$cIndex + 1];
+        echo "<div class='alert alert-success'>
+                <strong>✓ Slug detectado:</strong> <code>$slug</code>
+              </div>";
+    } else {
+        echo "<div class='alert alert-info'>
+                <strong>ℹ️ Nenhum slug na URL atual</strong> (isso é normal para diagnostic.php)
+              </div>";
+    }
+}
+
+echo "</div>";
+
+// ==============================================
+// TESTE 7: PERMISSÕES
+// ==============================================
+echo "<div class='test-section'>
+        <h2>7️⃣ Permissões de Arquivos</h2>";
+
+$checkPermissions = [
+    'c/' => __DIR__,
+    'c/index.php' => __DIR__ . '/index.php',
+    'c/.htaccess' => __DIR__ . '/.htaccess',
+    'storage/' => $basePath . '/storage',
+    'storage/logs/' => $basePath . '/storage/logs'
+];
+
+echo "<table>
+        <tr><th>Item</th><th>Permissões</th><th>Recomendado</th><th>Status</th></tr>";
+
+foreach ($checkPermissions as $name => $path) {
+    if (file_exists($path)) {
+        $perms = substr(sprintf('%o', fileperms($path)), -3);
+        $isDir = is_dir($path);
+        $recommended = $isDir ? '755' : '644';
+        $ok = ($perms === $recommended);
+        $icon = $ok ? "<span class='status-icon success'>✓</span>" : "<span class='status-icon warning'>⚠</span>";
+        $statusText = $ok ? "<span class='success'>OK</span>" : "<span class='warning'>Revisar</span>";
+        
+        echo "<tr>
+                <td>$name</td>
+                <td><code>$perms</code></td>
+                <td><code>$recommended</code></td>
+                <td>$icon $statusText</td>
+              </tr>";
+    } else {
+        echo "<tr>
+                <td>$name</td>
+                <td colspan='3'><span class='error'>Não existe</span></td>
+              </tr>";
+    }
+}
+
+echo "</table></div>";
+
+// ==============================================
+// RESUMO E PRÓXIMOS PASSOS
+// ==============================================
+echo "<div class='test-section'>
+        <h2>📋 Próximos Passos</h2>";
+
+$issues = [];
+
+if (!file_exists(__DIR__ . '/index.php')) {
+    $issues[] = "Criar arquivo <code>/c/index.php</code>";
+}
+
+if (!file_exists(__DIR__ . '/.htaccess')) {
+    $issues[] = "Criar arquivo <code>/c/.htaccess</code>";
+}
+
+if (function_exists('apache_get_modules')) {
+    $modules = apache_get_modules();
+    if (!in_array('mod_rewrite', $modules)) {
+        $issues[] = "Ativar mod_rewrite no Apache";
+    }
+}
+
+if (empty($issues)) {
+    echo "<div class='alert alert-success'>
+            <strong>✅ Tudo OK!</strong> O sistema está configurado corretamente.
+          </div>
+          <p>Se ainda está tendo erro 500, verifique:</p>
+          <ul>
+            <li>Se a campanha com o slug existe e está ativa</li>
+            <li>Os logs de erro em <code>/storage/logs/error.log</code></li>
+            <li>Os logs do Apache</li>
+          </ul>";
+} else {
+    echo "<div class='alert alert-warning'>
+            <strong>⚠️ Ações necessárias:</strong>
+          </div>
+          <ol>";
+    
+    foreach ($issues as $issue) {
+        echo "<li>$issue</li>";
+    }
+    
+    echo "</ol>";
+}
+
+echo "<p style='margin-top: 1.5rem;'>
+        <a href='" . BASE_URL . "/admin' class='btn'>← Voltar ao Admin</a>
+      </p>";
+
+echo "</div>";
+
+echo "</div></body></html>";

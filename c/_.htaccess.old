@@ -1,0 +1,54 @@
+# Cloaker Pro - URL Rewriting for /c/ directory
+# Configuração para processar slugs das campanhas
+
+# Habilitar Rewrite Engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /cloaker-pro/c/
+    
+    # Prevenir acesso direto a arquivos PHP exceto index.php
+    RewriteCond %{REQUEST_FILENAME} !index\.php$
+    RewriteCond %{REQUEST_FILENAME} \.php$
+    RewriteRule ^(.*)$ - [F,L]
+    
+    # Se não for arquivo ou diretório real
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Redirecionar tudo para index.php
+    # Exemplo: /c/test-slug -> /c/index.php com slug capturado
+    RewriteRule ^([a-zA-Z0-9\-]+)/?$ index.php?slug=$1 [L,QSA]
+</IfModule>
+
+# Proteção de Segurança
+<FilesMatch "\.(env|log|txt|sql|bak|backup|git)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Desabilitar listagem de diretório
+Options -Indexes
+
+# Configurações de segurança adicionais
+<IfModule mod_headers.c>
+    # Prevenir clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevenir MIME-type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Habilitar proteção XSS
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Cache control para performance
+<IfModule mod_expires.c>
+    ExpiresActive Off
+</IfModule>
+
+# Desabilitar cache para evitar problemas com redirecionamentos
+<IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</IfModule>
