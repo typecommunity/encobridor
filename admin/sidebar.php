@@ -188,15 +188,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <?php endif; ?>
         </a>
 
-        <!-- Domínios Personalizados -->
-<!-- Domínios Personalizados -->
-<a href="domains.php" class="sidebar-item <?php echo ($currentPage === 'domains.php') ? 'active' : ''; ?>" data-tooltip="Domínios">
-    <i class="fas fa-globe sidebar-icon"></i>
-    <span class="sidebar-text">Domínios</span>
-    <?php if ($currentPage === 'domains.php'): ?>
-    <div class="sidebar-indicator"></div>
-    <?php endif; ?>
-</a>
+
         
         <!-- Analytics -->
         <a href="analytics.php" class="sidebar-item <?php echo ($currentPage === 'analytics.php') ? 'active' : ''; ?>" data-tooltip="Analytics">

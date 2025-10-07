@@ -141,7 +141,7 @@
                         <p class="text-xs text-silver-dark">Powered by AutoStacker</p>
                     </div>
                 </div>
-                <a href="login.php" class="bg-gradient-silver hover:shadow-glow text-dark font-bold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105">
+                <a href="admin/login.php" class="bg-gradient-silver hover:shadow-glow text-dark font-bold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105">
                     <i class="fas fa-sign-in-alt mr-2"></i>Acessar Painel
                 </a>
             </div>
